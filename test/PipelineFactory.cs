@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Http;
 
 namespace Tests.Util
 {
@@ -27,21 +28,7 @@ namespace Tests.Util
                 {
                     app.UseAuthentication();
 
-                    app.Use((context, next) =>
-                    {
-                        var user = context.User;
-
-                        if (user.Identity.IsAuthenticated)
-                        {
-                            context.Response.StatusCode = 200;
-                        }
-                        else
-                        {
-                            context.Response.StatusCode = 401;
-                        }
-
-                        return Task.CompletedTask;
-                    });
+                    app.Use(Middleware);
                 }));
         }
 
@@ -53,6 +40,22 @@ namespace Tests.Util
         public static HttpMessageHandler CreateHandler(Action<IdentityServerAuthenticationOptions> options)
         {
             return CreateServer(options).CreateHandler();
+        }
+
+        private static Task Middleware(HttpContext context, RequestDelegate next)
+        {
+            var user = context.User;
+
+            if (user.Identity.IsAuthenticated)
+            {
+                context.Response.StatusCode = 200;
+            }
+            else
+            {
+                context.Response.StatusCode = 401;
+            }
+
+            return Task.CompletedTask;
         }
     }
 }
